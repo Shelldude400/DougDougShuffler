@@ -12,16 +12,16 @@ from obs_websockets import OBSWebsocketsManager
 # You press 0-9 to swap to a different active slot
 # F5 saves the state to the current active slot, F7 loads state from the active slot
 
-MINIMUM_SLOT_TIME = 2 # The minimum time we'll play a specific save slot
-MAXIMUM_SLOT_TIME = 20 # The minimum time we'll play a specific save slot
+MINIMUM_SLOT_TIME = 10 # The minimum time we'll play a specific save slot
+MAXIMUM_SLOT_TIME = 30 # The minimum time we'll play a specific save slot
 
 # If this is set to true, the program will display the # of remaining races in OBS
 # If you don't want to bother with OBS, just set this to false
 # Note that you will need to activate the OBS Websockets server for this to work
-USING_OBS_WEBSOCKETS = True 
+USING_OBS_WEBSOCKETS = False
 OBS_TEXT_SOURCE = "RACES LEFT" # Name this whatever text element you want to be updated in OBS
 
-remaining_slots = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+remaining_slots = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8']
 current_slot = None  # The current game slot
 previous_slot = None  # The previous game slot
 multiple_slots_remain = True
@@ -56,24 +56,24 @@ def swap_game():
         keyboard.press(current_slot) # Swap to new active slot
         time.sleep(0.05)
         keyboard.release(current_slot)
-        keyboard.press('F7') # Load the state in the active slot
+        #keyboard.press('F9') # Load the state in the active slot
         time.sleep(0.1)
-        keyboard.release('F7')
+        #keyboard.release('F9')
         print(f"\nSWAPPING TO SLOT {current_slot}!")
     elif len(remaining_slots) == 1 and multiple_slots_remain: # If this is the first time we've gotten to the last slot, we swap to it, then set a flag so that we don't swap again
          multiple_slots_remain = False
          current_slot = random.choice(remaining_slots)
-         audio_manager.play_audio("Final Speedrun.mp3",False,False)
+         #audio_manager.play_audio("Final Speedrun.mp3",False,False)
          keyboard.press(current_slot) # Swap to new active slot
          time.sleep(0.05)
          keyboard.release(current_slot)
-         keyboard.press('F7') # Load the state in the active slot
+         keyboard.press('F9') # Load the state in the active slot
          time.sleep(0.1)
-         keyboard.release('F7')
+         keyboard.release('F9')
          print(f"\nSWAPPING TO SLOT {current_slot}!")
     elif len(remaining_slots) == 0: # Challenge completed!
         audio_manager.play_audio("You Have Completed The Challenge.mp3",False,False)
-        time.sleep(60)
+        time.sleep(10)
         sys.exit()
 
     last_swap = time.time()  # Store the current time
@@ -87,9 +87,16 @@ def swap_game():
         time.sleep(sleep_time)
 
     # Save the slot
-    keyboard.press('F5')
-
+    keyboard.press('shift')
+    time.sleep(0.1)
+    keyboard.press(current_slot)
+    print(f"Pressing shift + {current_slot}\n")
+    time.sleep(0.1)
+    keyboard.release('shift')
+    keyboard.release(current_slot)
     time.sleep(0.1) # Wait 0.1 seconds inbetween save->load, so that P64 can process it
+
+    
 
 # Runs on separate thread and alerts swap_game() if spacebar is pressed
 def keyboard_listener():
@@ -102,11 +109,15 @@ def keyboard_listener():
                     remaining_slots.remove(current_slot)  # Remove current_slot from unfinished_slots
                     print(f"Removed {current_slot} from unfinished_slots")
                 stop_thread.set()  # Signal the other thread to stop
-                if len(remaining_slots) > 1:
+                #if len(remaining_slots) > 1:
                     # This plays anytime you remove a run from the list
                     # Feel free to change this to whatever sound you want
-                    audio_manager.play_audio("Speedrun Complete.mp3",False,False)
+                    # audio_manager.play_audio("Speedrun Complete.mp3",False,False)
                 break
+        elif keyboard.is_pressed('esc'):
+            print("ESC pressed, exiting program")
+            sys.exit()
+            break
         time.sleep(0.05)
 
 ######################################################################
